@@ -2,8 +2,10 @@
 """
 Helpers for Plot 
 """
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set(context="paper", font="monospace")
 
 def autolabel(rects, ax):
     # attach some text labels
