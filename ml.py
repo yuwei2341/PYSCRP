@@ -63,29 +63,29 @@ def plot_cor(corrmat):
     sns.heatmap(corrmat, vmax=.99, linewidths=0, square=True)
     f.tight_layout()
 
-def plot_importance(importances, feature_names):
+def plot_importance(importances, feature_names, ax=None):
     """Plot feature importance, ordered"""
 
-    feature_names = np.array([ii.replace('_', '-') for ii in feature_names])
     sorted_idx = np.argsort(importances)
-
-    fig = plt.figure(figsize=(8, len(feature_names) / 4))
-
-    plt.barh(range(len(importances)), importances[sorted_idx], alpha=0.3, color='blue', lw=0)
-    plt.yticks(np.arange(len(importances)) + 0.5, feature_names[sorted_idx], fontsize=14)
+    feature_names = np.array(feature_names)[sorted_idx]
+    #fig = plt.figure(figsize=(8, len(feature_names) / 4))
+    ax = ax or plt.subplots(figsize=(8, len(feature_names) / 4))[1]
+    
+    ax.barh(range(len(importances)), importances[sorted_idx], alpha=0.3, lw=0)
+    plt.yticks(np.arange(len(importances)) + 0.5, feature_names)
     plt.title('Feature Importance')
     plt.show()
 
 
-def plot_roc(y, predicted_score):
-    """Plot of a ROC curve for a specific class """
+def plot_roc(score, y_test, ax=None):
+    """Compute ROC curve """
 
-    fpr, tpr, _ = metrics.roc_curve(y, predicted_score)
-    roc_auc = metrics.roc_auc_score(y, predicted_score)
+    fpr, tpr, _ = metrics.roc_curve(y_test, score)
+    roc_auc = metrics.roc_auc_score(y_test, score)
 
-    plt.figure()
-    plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
-
+    # Plot of a ROC curve for a specific class
+    ax = ax or plt.subplots()[1]
+    ax.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
     plt.plot([0, 1], [0, 1], 'k--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -94,6 +94,7 @@ def plot_roc(y, predicted_score):
     plt.title('Receiver operating characteristic')
     plt.legend(loc="lower right")
     plt.show()
+    
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
                         n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
@@ -136,6 +137,14 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
 
     n_jobs : integer, optional
         Number of jobs to run in parallel (default 1).
+    
+    Example
+    --------
+        cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=random_state)
+        estimator = RandomForestClassifier()
+        plot_learning_curve(estimator, title, X, y, ylim=(0.7, 1.01), cv=cv, n_jobs=4)
+        plt.show()
+
     """
     plt.figure()
     plt.title(title)
