@@ -38,11 +38,11 @@ def sampling_imbalanced(df_major, df_minor, seed, ratio_sample=None):
     n_sample = np.random.choice(len(df_minor), int(len(df_minor) * ratio_sample), replace=True)
     return df_major.append(df_minor.iloc[n_sample])
 
-def get_xy(dff):
+def get_xy(dff, y_name='y'):
     """Get X and y, and feature names from data frame """
 
-    dfX = dff.drop('y', axis=1, errors='ignore')
-    y = None if 'y' not in dff else dff['y'].values
+    dfX = dff.drop(y_name, axis=1, errors='ignore')
+    y = None if y_name not in dff else dff[y_name].values
     return dfX.values, y, dfX.columns
 
 def normalizer(X, scaler=None):
