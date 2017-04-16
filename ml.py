@@ -75,6 +75,7 @@ def plot_importance(importances, feature_names, ax=None):
     plt.yticks(np.arange(len(importances)) + 0.5, feature_names)
     plt.title('Feature Importance')
     plt.show()
+    return importances[sorted_idx], feature_names
 
 
 def plot_roc(score, y_test, ax=None):
