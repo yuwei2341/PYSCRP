@@ -11,7 +11,18 @@ try:
 except ImportError as error:
     print "Error: {}. Possibly sklearn too old. Learning Curve not working".format(error)
 
-
+def get_count_perc(x, rm_zero, dropna):
+    if rm_zero:
+        x = x[x != 0]
+    df_count = x.value_counts(dropna=dropna)
+    df_count_perc = pd.concat([df_count, 
+                               (x.value_counts(normalize=True, dropna=dropna) * 100).rename(df_count.name + '%')], axis=1)
+    df_count_perc.loc['Total'] = df_count_perc.sum()
+    return df_count_perc
+    
+def value_counts_plus(df, rm_zero=False, dropna=False):
+    return pd.concat([get_count_perc(df[ii], rm_zero, dropna) for ii in df], axis=1).fillna('').astype(str)
+    
 def sample_df(df, ratio=0.8, seed=11):
     """Sample a df by index """
 
