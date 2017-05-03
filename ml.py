@@ -54,7 +54,7 @@ def get_xy(dff, y_name='y'):
 
     dfX = dff.drop(y_name, axis=1, errors='ignore')
     y = None if y_name not in dff else dff[y_name].values
-    return dfX.values, y, dfX.columns
+    return dfX.values, y, dfX.columns.values
 
 def normalizer(X, scaler=None):
     """Normalize data to have mean 0 and std 1 
