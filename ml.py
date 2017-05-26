@@ -6,6 +6,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn import metrics
 from sklearn import preprocessing
+from sklearn.calibration import calibration_curve
 try:
     from sklearn.model_selection import learning_curve
 except ImportError as error:
@@ -67,6 +68,20 @@ def normalizer(X, scaler=None):
     X_scaled = scaler.transform(X)
     return X_scaled, scaler
 
+def scale_data(X_train, X_test, is_scale=True):
+    """Unify process to scale or not scale data """
+
+    if is_scale:
+        print 'Scaling data'
+        X_train_scaled, scaler = normalizer(X_train, scaler=None)
+        X_test_scaled, _ = normalizer(X_test, scaler=scaler)
+    else:
+        print 'Not scaling data'
+        X_train_scaled = X_train
+        X_test_scaled = X_test
+        scaler = None
+    return X_train_scaled, X_test_scaled, scaler
+
 def plot_cor(corrmat):
     """Plot correlation matrix """
     sns.set(context="paper", font="monospace")
@@ -107,6 +122,32 @@ def plot_roc(score, y_test, ax=None):
     plt.legend(loc="lower right")
     plt.show()
     
+
+def proba_calibration(y_test, pred_proba):
+    """Calibration plots """
+
+    fraction_of_positives, mean_predicted_value = \
+        calibration_curve(y_test, pred_proba, n_bins=10)
+
+    plt.figure(figsize=(5, 5))
+    ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
+    ax2 = plt.subplot2grid((3, 1), (2, 0))
+
+    ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+    ax1.plot(mean_predicted_value, fraction_of_positives, "s-", label='Model')
+    ax2.hist(pred_proba, range=(0, 1), bins=10, label='Model',
+             histtype="step", lw=2)
+
+    ax1.set_ylabel("Fraction of positives")
+    ax1.set_ylim([-0.05, 1.05])
+    ax1.legend(loc="lower right")
+    ax1.set_title('Calibration plots  (reliability curve)')
+
+    ax2.set_xlabel("Mean predicted value")
+    ax2.set_ylabel("Count")
+    ax2.legend(loc="upper center", ncol=2)
+    plt.show()
+
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
                         n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
