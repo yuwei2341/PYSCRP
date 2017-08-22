@@ -3,7 +3,10 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
-from mpl_toolkits.basemap import Basemap
+try:
+    from mpl_toolkits.basemap import Basemap
+except ImportError:
+    Basemap = lambda: None
 
 def set_plt_font(SMALL_SIZE=14, MEDIUM_SIZE=16, BIGGER_SIZE=18):
   plt.rc('font', size=MEDIUM_SIZE)          # controls default text sizes
