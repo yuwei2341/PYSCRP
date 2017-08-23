@@ -9,19 +9,26 @@ except ImportError:
     Basemap = lambda: None
 
 def set_plt_font(SMALL_SIZE=14, MEDIUM_SIZE=16, BIGGER_SIZE=18):
-  plt.rc('font', size=MEDIUM_SIZE)          # controls default text sizes
-  plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-  plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-  plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-  plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-  plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-  plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+    plt.rc('font', size=MEDIUM_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 # import seaborn as sns
 # sns.set(context="paper", font="monospace")
 
 def autolabel(rects, ax):
-    # attach some text labels
+    '''Attach text labels to bar plots 
+    Args:
+        rects: bar plot handke
+        ax: axis
+    Note:
+        From: https://matplotlib.org/examples/api/barchart_demo.html
+    '''
+    
     if rects[0].get_x() == rects[1].get_x(): # axis from a barh
         min_loc = max(min(rect.get_width() for rect in rects), 0.1)
         for rect in rects:
