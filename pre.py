@@ -22,8 +22,7 @@ def set_timeind_slice(df, time_col, tz_to, tz_from='UTC', start= '1970-01-01', e
     return df
 
 def get_count_perc(x, rm_zero, dropna):
-	'''Get value counts and percentage of each value in total '''
-
+    '''Get value counts and percentage of each value in total '''
     if rm_zero:
         x = x[x != 0]
     df_count = x.value_counts(dropna=dropna)
