@@ -22,6 +22,7 @@ def sample_df(df, ratio=0.8, seed=11):
     df_cv = df.drop(rows)
     return df_train, df_cv
 
+
 def sampling_imbalanced(df_major, df_minor, seed, ratio_sample=None):
     """Sample to balanced imbalanced data df_major and df_minor, return the combined 
     
@@ -39,12 +40,14 @@ def sampling_imbalanced(df_major, df_minor, seed, ratio_sample=None):
     n_sample = np.random.choice(len(df_minor), int(len(df_minor) * ratio_sample), replace=True)
     return df_major.append(df_minor.iloc[n_sample])
 
+
 def get_xy(dff, y_name='y'):
     """Get X and y, and feature names from data frame """
 
     dfX = dff.drop(y_name, axis=1, errors='ignore')
     y = None if y_name not in dff else dff[y_name].values
     return dfX.values, y, dfX.columns.values
+
 
 def normalizer(X, scaler=None):
     """Normalize data to have mean 0 and std 1 
@@ -56,6 +59,7 @@ def normalizer(X, scaler=None):
         scaler = preprocessing.StandardScaler().fit(X)
     X_scaled = scaler.transform(X)
     return X_scaled, scaler
+
 
 def scale_data(X_train, X_test, is_scale=True):
     """Unify process to scale or not scale data """
@@ -71,12 +75,14 @@ def scale_data(X_train, X_test, is_scale=True):
         scaler = None
     return X_train_scaled, X_test_scaled, scaler
 
+
 def plot_cor(corrmat):
     """Plot correlation matrix """
     sns.set(context="paper", font="monospace")
     f, ax = plt.subplots(figsize=(12, 9))
     sns.heatmap(corrmat, vmax=.99, linewidths=0, square=True)
     f.tight_layout()
+
 
 def plot_importance(importances, feature_names, ax=None):
     """Plot feature importance, ordered"""
@@ -136,6 +142,28 @@ def proba_calibration(y_test, pred_proba):
     ax2.set_ylabel("Count")
     ax2.legend(loc="upper center", ncol=2)
     plt.show()
+
+
+def choose_threshold(y_test, score):
+    metric_scores = []
+    threshold_range = np.arange(0.01, 1, 0.01)
+    for threshold in threshold_range:
+        y_pred = score > threshold
+        metric_scores.append((metrics.precision_score(y_test, y_pred), metrics.recall_score(y_test, y_pred), metrics.f1_score(y_test, y_pred)))
+
+    df_metric = pd.DataFrame(data=metric_scores, columns=['precision', 'recall', 'f1'], index=threshold_range)
+    metric_max = df_metric[df_metric['f1'] == df_metric['f1'].max()]
+    metric_max.index.name = 'threshold'
+
+    f, ax = plt.subplots(figsize=(8, 6))
+    df_metric.plot(ax=ax)
+    ax.axvline(x=metric_max.index[0], color='black', linestyle='--', lw=0.5)
+
+    xticks = list(np.arange(0.2, 1, 0.2)) + [metric_max.index[0]]
+    ax.set_xticks(xticks)
+    ax.text(x=metric_max.index[0] + 0.01, y=0.2, s=metric_max.to_string(index=False, float_format='    %.2f', ))
+    
+    return metric_max
 
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
