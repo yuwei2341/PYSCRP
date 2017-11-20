@@ -19,6 +19,15 @@ def set_plt_font(SMALL_SIZE=14, MEDIUM_SIZE=16, BIGGER_SIZE=18):
 
 # import seaborn as sns
 # sns.set(context="paper", font="monospace")
+def add_line_label(ax, yloc=None, is_color=False):
+    # Add label of line at the end, instead of using legend
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    y_range = ymax - ymin
+    for i, l in enumerate(ax.lines):
+        y_this = l.get_xydata()[-1, 1] if yloc is None else yloc[i]
+        color = l.get_c() if is_color else 'black'            
+        ax.text(xmax, y_this, l.get_label(), horizontalalignment='left', verticalalignment='center', color=color)
 
 def autolabel(rects, ax):
     '''Attach text labels to bar plots 

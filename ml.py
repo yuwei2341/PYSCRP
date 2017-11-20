@@ -152,7 +152,7 @@ def choose_threshold(y_test, score):
         metric_scores.append((metrics.precision_score(y_test, y_pred), metrics.recall_score(y_test, y_pred), metrics.f1_score(y_test, y_pred)))
 
     df_metric = pd.DataFrame(data=metric_scores, columns=['precision', 'recall', 'f1'], index=threshold_range)
-    metric_max = df_metric[df_metric['f1'] == df_metric['f1'].max()]
+    metric_max = df_metric[df_metric['f1'] == df_metric['f1'].max()].iloc[:1, :]
     metric_max.index.name = 'threshold'
 
     f, ax = plt.subplots(figsize=(8, 6))
@@ -161,7 +161,7 @@ def choose_threshold(y_test, score):
 
     xticks = list(np.arange(0.2, 1, 0.2)) + [metric_max.index[0]]
     ax.set_xticks(xticks)
-    ax.text(x=metric_max.index[0] + 0.01, y=0.2, s=metric_max.to_string(index=False, float_format='    %.2f', ))
+    ax.text(x=metric_max.index[0] + 0.01, y=0.8, s=metric_max.to_string(index=False, float_format='    %.2f', ))
     
     return metric_max
 
