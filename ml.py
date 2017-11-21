@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import sklearn
 from sklearn import metrics
 from sklearn import preprocessing
 from sklearn.calibration import calibration_curve
@@ -144,27 +145,34 @@ def proba_calibration(y_test, pred_proba):
     plt.show()
 
 
-def choose_threshold(y_test, score):
+def choose_threshold(y_test, score, upper=None, lower=None, is_max_f1=True):
     metric_scores = []
-    threshold_range = np.arange(0.01, 1, 0.01)
+    upper = round(upper or score.max() * 1.1, 2)
+    lower = round(lower or score.min() * 0.9, 2)
+    threshold_range = np.arange(lower, upper, 0.01)
     for threshold in threshold_range:
         y_pred = score > threshold
-        metric_scores.append((metrics.precision_score(y_test, y_pred), metrics.recall_score(y_test, y_pred), metrics.f1_score(y_test, y_pred)))
+        metric_scores.append((sklearn.metrics.precision_score(y_test, y_pred), 
+                              sklearn.metrics.recall_score(y_test, y_pred), 
+                              sklearn.metrics.f1_score(y_test, y_pred), 
+                              y_pred.mean()
+                             ))
 
-    df_metric = pd.DataFrame(data=metric_scores, columns=['precision', 'recall', 'f1'], index=threshold_range)
+    df_metric = pd.DataFrame(data=metric_scores, columns=['precision', 'recall', 'f1', 'frac_pred_pos'], index=threshold_range)
     metric_max = df_metric[df_metric['f1'] == df_metric['f1'].max()].iloc[:1, :]
     metric_max.index.name = 'threshold'
 
     f, ax = plt.subplots(figsize=(8, 6))
     df_metric.plot(ax=ax)
-    ax.axvline(x=metric_max.index[0], color='black', linestyle='--', lw=0.5)
-
-    xticks = list(np.arange(0.2, 1, 0.2)) + [metric_max.index[0]]
+    xticks = list(np.arange(lower, upper, 0.05))
     ax.set_xticks(xticks)
-    ax.text(x=metric_max.index[0] + 0.01, y=0.8, s=metric_max.to_string(index=False, float_format='    %.2f', ))
+    if is_max_f1:
+        ax.axvline(x=metric_max.index[0], color='black', linestyle='--', lw=0.5)
+        ax.text(x=metric_max.index[0] + 0.01, y=metric_max['f1'] * 1.2, 
+                s=metric_max.to_string(index=False, float_format='    %.2f', ))
     
-    return metric_max
-
+    return metric_max, df_metric
+    
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
                         n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
