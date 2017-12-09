@@ -45,3 +45,10 @@ hide_code = '''
         <input type="submit" class="btn btn-sm btn-default" id="togglePrompt" value="Show Prompt" style="float: right;">
     </form>
 '''
+
+def print_table(table):
+    # table is a list of tuples, where each tuple is a line, each element of the tuple is a column
+    col_width = [max(len(x) for x in col) for col in zip(*table)]
+    for line in table:
+        print "| " + " ".join("{txt:{width}}".format(txt=x, width=col_width[i])
+                                for i, x in enumerate(line)) + " |"
