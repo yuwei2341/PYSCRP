@@ -301,3 +301,4 @@ def tree_to_code(tree, feature_names):
             print "{}return {}, prob: {:.2f}".format(indent, rslt, rslt[1] * 1.0 / sum(rslt))
 
     recurse(0, 1)
+
