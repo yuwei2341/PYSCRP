@@ -145,32 +145,37 @@ def proba_calibration(y_test, pred_proba):
     plt.show()
 
 
-def choose_threshold(y_test, score, upper=None, lower=None, is_max_f1=True):
+def choose_threshold(y_test, score, upper=None, lower=None, is_max_f1=True, is_plot=True):
     metric_scores = []
     upper = round(upper or score.max() * 1.1, 2)
     lower = round(lower or score.min() * 0.9, 2)
     threshold_range = np.arange(lower, upper, 0.01)
+    used_threshold = []
     for threshold in threshold_range:
         y_pred = score > threshold
-        metric_scores.append((sklearn.metrics.precision_score(y_test, y_pred), 
-                              sklearn.metrics.recall_score(y_test, y_pred), 
-                              sklearn.metrics.f1_score(y_test, y_pred), 
-                              y_pred.mean()
-                             ))
+        if y_pred.sum() >= 1:
+            used_threshold.append(threshold)
+            metric_scores.append((sklearn.metrics.precision_score(y_test, y_pred), 
+                                  sklearn.metrics.recall_score(y_test, y_pred), 
+                                  sklearn.metrics.f1_score(y_test, y_pred), 
+                                  y_pred.mean()
+                                 ))
 
-    df_metric = pd.DataFrame(data=metric_scores, columns=['precision', 'recall', 'f1', 'frac_pred_pos'], index=threshold_range)
+    df_metric = pd.DataFrame(data=metric_scores, columns=['precision', 'recall', 'f1', 'frac_pred_pos'], index=used_threshold)
     metric_max = df_metric[df_metric['f1'] == df_metric['f1'].max()].iloc[:1, :]
     metric_max.index.name = 'threshold'
 
-    f, ax = plt.subplots(figsize=(8, 6))
-    df_metric.plot(ax=ax)
-    xticks = list(np.arange(lower, upper, 0.05))
-    ax.set_xticks(xticks)
-    if is_max_f1:
-        ax.axvline(x=metric_max.index[0], color='black', linestyle='--', lw=0.5)
-        ax.text(x=metric_max.index[0] + 0.01, y=metric_max['f1'] * 1.2, 
-                s=metric_max.to_string(index=False, float_format='    %.2f', ))
-    
+    if is_plot:
+        f, ax = plt.subplots(figsize=(8, 6))
+        df_metric.plot(ax=ax)
+        xticks_int = 0.1 if upper - lower > 0.6 else 0.05
+        xticks = list(np.arange(lower, upper, xticks_int))
+        ax.set_xticks(xticks)
+        if is_max_f1:
+            ax.axvline(x=metric_max.index[0], color='black', linestyle='--', lw=0.5)
+            ax.text(x=metric_max.index[0] + 0.01, y=metric_max['f1'] * 1.2, 
+                    s=metric_max.to_string(index=False, float_format='    %.2f', ))
+        
     return metric_max, df_metric
     
 
@@ -250,3 +255,49 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
 
     plt.legend(loc="best")
     return plt
+
+
+def plot_gain(df, y_test_col='y_test', score_col='score'):
+    df_score = df[[y_test_col, score_col]].sort_values(score_col, ascending=False).reset_index(drop=True)
+    df_score['population decile'] = df_score.index / ((len(df_score.index) + 1) / 10) + 1
+    df_score['population decile'] = df_score['population decile'].apply(lambda x: x if x <= 10 else 10)
+    
+    ap = df_score[y_test_col].sum()
+    df_decile = df_score.groupby('population decile')[y_test_col].agg({'random chance': lambda x: 0.1, 
+                                                                       'model': lambda x: x.sum() * 1.0 / ap, 
+                                                                       'precision': lambda x: x.mean()})
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
+    df_decile['precision'].plot(kind='bar', title='Precision in each decile', ax=axs[0])
+    axs[0].set_xticklabels(range(1, 11), rotation=0)
+    df_decile.loc[0] = [0, 0, 0]
+    df_decile[['random chance', 'model']].sort_index().cumsum().plot(title='Cumulative Gain Chart', ax=axs[1])
+    axs[1].set_xticks(range(11))
+    axs[1].set_ylabel('target population%')
+    # axs[1].set_xticklabels(range(11), rotation=0)
+    plt.show()
+
+
+def tree_to_code(tree, feature_names):
+    # Return rules from tree
+    from sklearn.tree import _tree
+    tree_ = tree.tree_
+    feature_name = [
+        feature_names[i] if i != _tree.TREE_UNDEFINED else "undefined!"
+        for i in tree_.feature
+    ]
+    print "def tree({}):".format(", ".join(feature_names))
+
+    def recurse(node, depth):
+        indent = "  " * depth
+        if tree_.feature[node] != _tree.TREE_UNDEFINED:
+            name = feature_name[node]
+            threshold = tree_.threshold[node]
+            print "{}if {} <= {}:".format(indent, name, threshold)
+            recurse(tree_.children_left[node], depth + 1)
+            print "{}else:  # if {} > {}".format(indent, name, threshold)
+            recurse(tree_.children_right[node], depth + 1)
+        else:
+            rslt = tree_.value[node][0]
+            print "{}return {}, prob: {:.2f}".format(indent, rslt, rslt[1] * 1.0 / sum(rslt))
+
+    recurse(0, 1)
