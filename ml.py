@@ -62,13 +62,16 @@ def normalizer(X, scaler=None):
     return X_scaled, scaler
 
 
-def scale_data(X_train, X_test, is_scale=True):
+def scale_data(X_train, X_test=None, is_scale=True):
     """Unify process to scale or not scale data """
 
     if is_scale:
         print 'Scaling data'
         X_train_scaled, scaler = normalizer(X_train, scaler=None)
-        X_test_scaled, _ = normalizer(X_test, scaler=scaler)
+        if X_test is not None:
+            X_test_scaled, _ = normalizer(X_test, scaler=scaler)
+        else:
+            X_test_scaled = X_test
     else:
         print 'Not scaling data'
         X_train_scaled = X_train
