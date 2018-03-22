@@ -7,6 +7,7 @@ import seaborn as sns
 import sklearn
 from sklearn import metrics
 from sklearn import preprocessing
+from sklearn.metrics import precision_recall_curve
 from sklearn.calibration import calibration_curve
 try:
     from sklearn.model_selection import learning_curve
@@ -148,23 +149,23 @@ def proba_calibration(y_test, pred_proba):
     plt.show()
 
 
-def choose_threshold(y_test, score, upper=None, lower=None, is_max_f1=True, is_plot=True):
-    metric_scores = []
-    upper = round(upper or score.max() * 1.1, 2)
-    lower = round(lower or score.min() * 0.9, 2)
-    threshold_range = np.arange(lower, upper, 0.01)
-    used_threshold = []
-    for threshold in threshold_range:
-        y_pred = score > threshold
-        if y_pred.sum() >= 1:
-            used_threshold.append(threshold)
-            metric_scores.append((sklearn.metrics.precision_score(y_test, y_pred), 
-                                  sklearn.metrics.recall_score(y_test, y_pred), 
-                                  sklearn.metrics.f1_score(y_test, y_pred), 
-                                  y_pred.mean()
-                                 ))
+def precision_recall_curve_plus(y_test, score, upper=None, lower=None, is_max_f1=True, is_plot=True):
+    
+    upper = upper or round(score.max() * 1.1, 2)
+    lower = lower or round(score.min() * 0.9, 2)
 
-    df_metric = pd.DataFrame(data=metric_scores, columns=['precision', 'recall', 'f1', 'frac_pred_pos'], index=used_threshold)
+    precision, recall, threshold = precision_recall_curve(y_test, score)
+    precision = precision[:-1] # the last one is an extra and is 1
+    recall = recall[:-1] # the last one is an extra and is 0
+    f1 = precision * recall * 2 / (precision + recall)
+    frac_pred_pos = [(score > ii).mean() for ii in threshold]
+    df_metric = pd.DataFrame({'precision': precision, 'recall': recall, 'f1': f1, 'frac_pred_pos': frac_pred_pos}, 
+                         index=threshold)
+    
+    # Return only threshold within certain range
+    df_metric = df_metric.loc[(df_metric.index >= lower) & (df_metric.index <= upper)]
+    
+    # Get argmaxf1 for threshold
     metric_max = df_metric[df_metric['f1'] == df_metric['f1'].max()].iloc[:1, :]
     metric_max.index.name = 'threshold'
 
@@ -178,9 +179,11 @@ def choose_threshold(y_test, score, upper=None, lower=None, is_max_f1=True, is_p
             ax.axvline(x=metric_max.index[0], color='black', linestyle='--', lw=0.5)
             ax.text(x=metric_max.index[0] + 0.01, y=metric_max['f1'] * 1.2, 
                     s=metric_max.to_string(index=False, float_format='    %.2f', ))
-        
+
     return metric_max, df_metric
     
+choose_threshold = precision_recall_curve_plus # for backward compatibility
+
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
                         n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
