@@ -263,25 +263,35 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     return plt
 
 
-def plot_gain(df, y_test_col='y_test', score_col='score'):
+def plot_gain(df, n_split=10, y_test_col='y_test', score_col='score'):
+    '''Plot gain charts
+    Input:
+        df: dataframe containing true value and predicted score
+        n_split: how many buckets to split predictions
+        y_test_col: name of true value column
+        score: name of predicted score column    
+    
+    '''
+    
     df_score = df[[y_test_col, score_col]].sort_values(score_col, ascending=False).reset_index(drop=True)
-    df_score['population decile'] = df_score.index / ((len(df_score.index) + 1) / 10) + 1
-    df_score['population decile'] = df_score['population decile'].apply(lambda x: x if x <= 10 else 10)
+    df_score['prediction_score_bucket'] = df_score.index / ((len(df_score.index) + 1) / n_split) + 1
+    df_score['prediction_score_bucket'] = df_score['prediction_score_bucket'].apply(lambda x: min(x, n_split))
     
     ap = df_score[y_test_col].sum()
-    df_decile = df_score.groupby('population decile')[y_test_col].agg({'random chance': lambda x: 0.1, 
+    df_quantile = df_score.groupby('prediction_score_bucket')[y_test_col].agg({'random chance': lambda x: 1.0 / n_split, 
                                                                        'model': lambda x: x.sum() * 1.0 / ap, 
                                                                        'precision': lambda x: x.mean()})
     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
-    df_decile['precision'].plot(kind='bar', title='Precision in each decile', ax=axs[0])
-    axs[0].set_xticklabels(range(1, 11), rotation=0)
-    df_decile.loc[0] = [0, 0, 0]
-    df_decile[['random chance', 'model']].sort_index().cumsum().plot(title='Cumulative Gain Chart', ax=axs[1])
-    axs[1].set_xticks(range(11))
+    df_quantile['precision'].plot(kind='bar', title='Precision in prediction score buckets', ax=axs[0])
+    axs[0].set_xticklabels(range(1, n_split + 1), rotation=0)
+    axs[0].set_ylabel('precision')
+    df_quantile.loc[0] = [0, 0, 0]
+    df_quantile[['random chance', 'model']].sort_index().cumsum().plot(title='Cumulative Gain Chart', ax=axs[1])
+    axs[1].set_xticks(range(n_split + 1))
     axs[1].set_ylabel('target population%')
-    # axs[1].set_xticklabels(range(11), rotation=0)
+    axs[1].set_xticklabels(range(n_split + 1), rotation=0)
     plt.show()
-
+    
 
 def tree_to_code(tree, feature_names):
     # Return rules from tree
