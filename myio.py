@@ -7,10 +7,17 @@ import socket
 import pandas as pd
 
 from queryrunner_client import Client
+
+host_name = socket.gethostname()
 # parameters for query_runner
 QR_PARAMS = {'user_email': 'yuwei@uber.com'}
-if socket.gethostname() == 'yuwei-C02SH0TQG8WL':
+
+if host_name == 'yuwei-C02SH0TQG8WL':
     QR_PARAMS['hdfs_proxy_port'] = 9999
+elif 'adhoc' in host_name:    
+    from queryrunner_client import start_adhoc
+    start_adhoc()    
+
 QR = Client(**QR_PARAMS)
 
 class DataIO(object):
