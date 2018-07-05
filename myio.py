@@ -24,7 +24,6 @@ class DataIO(object):
     '''Read data as pandas dataframe from local file or query '''
     def __init__(self):
         self.dir_name = ''
-        self.data_file = ''
         self.file_name = ''
         self.query = None
         self.df = None
@@ -37,7 +36,7 @@ class DataIO(object):
         if self.load_source == 'auto':
             self.load_source = 'file' if os.path.exists(self.file_name) else 'query'
 
-    def _load_data(self, is_update_local_file):
+    def _load_data(self):
         if self.load_source == 'file':
             self.df = pd.read_csv(self.file_name)
             print 'Local data loaded'
@@ -48,25 +47,31 @@ class DataIO(object):
                 sys.exit(1)
             data = QR.execute(self.query['db'], self.query['query'], timeout=10**6).fetchall()
             self.df = pd.DataFrame(data)
-            if is_update_local_file:
-                self.df.to_csv(self.file_name, index=False)
-                print 'Local data saved/updated from query'
+    
+    def _save_data(self):
+        self.df.to_csv(self.file_name, index=False)
+        print 'Data saved to {}'.format(self.file_name)
 
     def _set_time_col(self, col_time):
         if col_time is not None and self.df[col_time].dtype.kind != 'M':
             self.df[col_time] = pd.to_datetime(self.df[col_time])
 
-    def set_dir(self, dir_name):
+    def set_file_name(self, dir_name, data_file):
         self.dir_name = dir_name
+        self.file_name = os.path.join(self.dir_name, data_file)
 
-    def load_format_data(self, load_source='auto', data_file='', query=None, is_update_local_file=True, col_time=None):
+    def load_format_data(self, load_source='auto', query=None, is_update_local_file=False, col_time=None):
         self.load_source = load_source
-        self.data_file = data_file
-        self.file_name = os.path.join(self.dir_name, self.data_file)
         self.query = query
         self._set_load_source()
-        self._load_data(is_update_local_file)
+        self._load_data()
+        if is_update_local_file:
+            if not self.file_name:
+                print 'Run self._set_file_name(dir_name, data_file) to set output path'
+                sys.exit(1)
+            self._save_data()
         self._set_time_col(col_time)
+        
 
 def sample_read(out, n, s, seed=42):
 	random.seed(seed)
