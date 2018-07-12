@@ -25,7 +25,7 @@ class DataIO(object):
     def __init__(self):
         self.dir_name = ''
         self.file_name = ''
-        self.query = None
+        self.query = '' # A dict of 'db' and 'query'
         self.df = None
         self.load_source = ''
 
@@ -35,7 +35,17 @@ class DataIO(object):
             sys.exit(1)
         if self.load_source == 'auto':
             self.load_source = 'file' if os.path.exists(self.file_name) else 'query'
-
+    
+    def _get_query(self, query, query_file):
+        if query is not None:
+            self.query = query
+        elif query_file is not None:
+            with open(query_file) as f:
+                query_text = f.read()
+            self.query = {'query': query_text,
+                          'db': 'hive'
+                         }
+        
     def _load_data(self):
         if self.load_source == 'file':
             self.df = pd.read_csv(self.file_name)
@@ -56,14 +66,14 @@ class DataIO(object):
         if col_time is not None and self.df[col_time].dtype.kind != 'M':
             self.df[col_time] = pd.to_datetime(self.df[col_time])
 
-    def set_file_name(self, dir_name, data_file):
+    def set_file_name(self, data_file, dir_name=''):
         self.dir_name = dir_name
         self.file_name = os.path.join(self.dir_name, data_file)
 
-    def load_format_data(self, load_source='auto', query=None, is_update_local_file=False, col_time=None):
+    def load_format_data(self, load_source='auto', query=None, is_update_local_file=False, col_time=None, query_file=None):
         self.load_source = load_source
-        self.query = query
         self._set_load_source()
+        self._get_query(query, query_file)        
         self._load_data()
         if is_update_local_file:
             if not self.file_name:
