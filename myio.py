@@ -14,9 +14,12 @@ QR_PARAMS = {'user_email': 'yuwei@uber.com'}
 
 if host_name == 'yuwei-C02SH0TQG8WL':
     QR_PARAMS['hdfs_proxy_port'] = 9999
-elif 'adhoc' in host_name:    
-    from queryrunner_client import start_adhoc
-    start_adhoc()    
+elif 'adhoc' in host_name:
+    try:
+        from queryrunner_client import start_adhoc
+        start_adhoc()    
+    except ImportError:
+        print 'Using an older version queryrunner. No need to start_adhoc'
 
 QR = Client(**QR_PARAMS)
 
