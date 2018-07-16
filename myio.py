@@ -8,10 +8,12 @@ import pandas as pd
 
 from queryrunner_client import Client
 
-host_name = socket.gethostname()
+# HTML to restart kernel in jupyter notebook - from IPython.core.display import HTML; HTML(RESTART_KERNEL)
+RESTART_KERNEL = "<script>Jupyter.notebook.kernel.restart()</script>"
 # parameters for query_runner
 QR_PARAMS = {'user_email': 'yuwei@uber.com'}
-
+# query_runner object
+host_name = socket.gethostname()
 if host_name == 'yuwei-C02SH0TQG8WL':
     QR_PARAMS['hdfs_proxy_port'] = 9999
 elif 'adhoc' in host_name:
@@ -20,7 +22,6 @@ elif 'adhoc' in host_name:
         start_adhoc()    
     except ImportError:
         print 'Using an older version queryrunner. No need to start_adhoc'
-
 QR = Client(**QR_PARAMS)
 
 class DataIO(object):
