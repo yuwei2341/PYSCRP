@@ -29,7 +29,7 @@ class DataIO(object):
     def __init__(self):
         self.dir_name = ''
         self.file_name = ''
-        self.query = '' # A dict of 'db' and 'query'
+        self.query = None # A dict of 'db' and 'query'
         self.df = None
         self.load_source = ''
 
