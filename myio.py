@@ -80,10 +80,13 @@ class DataIO(object):
         self._get_query(query, query_file)        
         self._load_data()
         if is_update_local_file:
-            if not self.file_name:
-                print 'Run self._set_file_name(dir_name, data_file) to set output path'
+            if self.df.empty:
+                print 'Retrieved dataframe is empty. Not going to update local file'
                 sys.exit(1)
-            self._save_data()
+            if not self.file_name:
+                print 'Run self._set_file_name(dir_name, data_file) to set output path. Not going to update local file'
+            else:                
+                self._save_data()
         self._set_time_col(col_time)
         
 
