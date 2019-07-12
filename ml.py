@@ -1,10 +1,11 @@
+#!/usr/bin/env python3
+
 """Library for Machine Learning """
 import random
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import sklearn
 from sklearn import metrics
 from sklearn import preprocessing
 from sklearn.metrics import precision_recall_curve
@@ -12,9 +13,9 @@ from sklearn.calibration import calibration_curve
 try:
     from sklearn.model_selection import learning_curve
 except ImportError as error:
-    print "Error: {}. Possibly sklearn too old. Learning Curve not working".format(error)
+    print("Error: {}. Possibly sklearn too old. Learning Curve not working".format(error))
 
-
+TRAIN_SIZES = np.linspace(.1, 1.0, 5)
 def sample_df(df, ratio=0.8, seed=11):
     """Sample a df by index """
 
@@ -26,14 +27,14 @@ def sample_df(df, ratio=0.8, seed=11):
 
 
 def sampling_imbalanced(df_major, df_minor, seed, ratio_sample=None):
-    """Sample to balanced imbalanced data df_major and df_minor, return the combined 
-    
+    """Sample to balanced imbalanced data df_major and df_minor, return the combined
+
     Note:
         If no sampling ratio is given, will use the ratio of # majro data over # minor data,
         so that the resulted new minor data will have comparable size with the major
     Returns:
         Combination of df_major and sampled df_minor
-    
+
     """
 
     np.random.seed(seed)
@@ -52,10 +53,10 @@ def get_xy(dff, y_name='y'):
 
 
 def normalizer(X, scaler=None):
-    """Normalize data to have mean 0 and std 1 
-    
+    """Normalize data to have mean 0 and std 1
+
     Use provided scaler; if None, scale with the given data
-    
+
     """
     if not scaler:
         scaler = preprocessing.StandardScaler().fit(X)
@@ -67,14 +68,14 @@ def scale_data(X_train, X_test=None, is_scale=True):
     """Unify process to scale or not scale data """
 
     if is_scale:
-        print 'Scaling data'
+        print('Scaling data')
         X_train_scaled, scaler = normalizer(X_train, scaler=None)
         if X_test is not None:
             X_test_scaled, _ = normalizer(X_test, scaler=scaler)
         else:
             X_test_scaled = X_test
     else:
-        print 'Not scaling data'
+        print('Not scaling data')
         X_train_scaled = X_train
         X_test_scaled = X_test
         scaler = None
@@ -96,7 +97,7 @@ def plot_importance(importances, feature_names, ax=None):
     feature_names = np.array(feature_names)[sorted_idx]
     #fig = plt.figure(figsize=(8, len(feature_names) / 4))
     ax = ax or plt.subplots(figsize=(8, len(feature_names) / 4))[1]
-    
+
     ax.barh(range(len(importances)), importances[sorted_idx], alpha=0.3, lw=0)
     plt.yticks(np.arange(len(importances)) + 0.5, feature_names)
     plt.title('Feature Importance')
@@ -121,7 +122,7 @@ def plot_roc(score, y_test, ax=None):
     plt.title('Receiver operating characteristic')
     plt.legend(loc="lower right")
     plt.show()
-    
+
 
 def proba_calibration(y_test, pred_proba):
     """Calibration plots """
@@ -150,21 +151,21 @@ def proba_calibration(y_test, pred_proba):
 
 
 def precision_recall_curve_plus(y_test, score, upper=None, lower=None, is_max_f1=True, is_plot=True):
-    
+
     upper = upper or round(score.max() * 1.1, 2)
     lower = lower or round(score.min() * 0.9, 2)
 
     precision, recall, threshold = precision_recall_curve(y_test, score)
-    precision = precision[:-1] # the last one is an extra and is 1
-    recall = recall[:-1] # the last one is an extra and is 0
+    precision = precision[:-1]  # the last one is an extra and is 1
+    recall = recall[:-1]  # the last one is an extra and is 0
     f1 = precision * recall * 2 / (precision + recall)
     frac_pred_pos = [(score > ii).mean() for ii in threshold]
-    df_metric = pd.DataFrame({'precision': precision, 'recall': recall, 'f1': f1, 'frac_pred_pos': frac_pred_pos}, 
-                         index=threshold)
-    
+    df_metric = pd.DataFrame({'precision': precision, 'recall': recall, 'f1': f1,
+                              'frac_pred_pos': frac_pred_pos}, index=threshold)
+
     # Return only threshold within certain range
     df_metric = df_metric.loc[(df_metric.index >= lower) & (df_metric.index <= upper)]
-    
+
     # Get argmaxf1 for threshold
     metric_max = df_metric[df_metric['f1'] == df_metric['f1'].max()].iloc[:1, :]
     metric_max.index.name = 'threshold'
@@ -177,16 +178,17 @@ def precision_recall_curve_plus(y_test, score, upper=None, lower=None, is_max_f1
         ax.set_xticks(xticks)
         if is_max_f1:
             ax.axvline(x=metric_max.index[0], color='black', linestyle='--', lw=0.5)
-            ax.text(x=metric_max.index[0] + 0.01, y=metric_max['f1'] * 1.2, 
+            ax.text(x=metric_max.index[0] + 0.01, y=metric_max['f1'] * 1.2,
                     s=metric_max.to_string(index=False, float_format='    %.2f', ))
 
     return metric_max, df_metric
-    
-choose_threshold = precision_recall_curve_plus # for backward compatibility
+
+
+choose_threshold = precision_recall_curve_plus  # for backward compatibility
 
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
-                        n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
+                        n_jobs=1, train_sizes=TRAIN_SIZES):
     """
     Generate a simple plot of the test and training learning curve.
 
@@ -226,7 +228,7 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
 
     n_jobs : integer, optional
         Number of jobs to run in parallel (default 1).
-    
+
     Example
     --------
         cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=random_state)
@@ -269,17 +271,17 @@ def plot_gain(df, n_split=10, y_test_col='y_test', score_col='score'):
         df: dataframe containing true value and predicted score
         n_split: how many buckets to split predictions
         y_test_col: name of true value column
-        score: name of predicted score column    
-    
+        score: name of predicted score column
+
     '''
-    
+
     df_score = df[[y_test_col, score_col]].sort_values(score_col, ascending=False).reset_index(drop=True)
     df_score['prediction_score_bucket'] = df_score.index / ((len(df_score.index) + 1) / n_split) + 1
     df_score['prediction_score_bucket'] = df_score['prediction_score_bucket'].apply(lambda x: min(x, n_split))
-    
+
     ap = df_score[y_test_col].sum()
-    df_quantile = df_score.groupby('prediction_score_bucket')[y_test_col].agg({'random chance': lambda x: 1.0 / n_split, 
-                                                                       'model': lambda x: x.sum() * 1.0 / ap, 
+    df_quantile = df_score.groupby('prediction_score_bucket')[y_test_col].agg({'random chance': lambda x: 1.0 / n_split,
+                                                                       'model': lambda x: x.sum() * 1.0 / ap,
                                                                        'precision': lambda x: x.mean()})
     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
     df_quantile['precision'].plot(kind='bar', title='Precision in prediction score buckets', ax=axs[0])
@@ -291,7 +293,7 @@ def plot_gain(df, n_split=10, y_test_col='y_test', score_col='score'):
     axs[1].set_ylabel('target population%')
     axs[1].set_xticklabels(range(n_split + 1), rotation=0)
     plt.show()
-    
+
 
 def tree_to_code(tree, feature_names):
     # Return rules from tree
@@ -301,21 +303,19 @@ def tree_to_code(tree, feature_names):
         feature_names[i] if i != _tree.TREE_UNDEFINED else "undefined!"
         for i in tree_.feature
     ]
-    print "def tree({}):".format(", ".join(feature_names))
+    print("def tree({}):".format(", ".join(feature_names)))
 
     def recurse(node, depth):
         indent = "  " * depth
         if tree_.feature[node] != _tree.TREE_UNDEFINED:
             name = feature_name[node]
             threshold = tree_.threshold[node]
-            print "{}if {} <= {}:".format(indent, name, threshold)
+            print("{}if {} <= {}:".format(indent, name, threshold))
             recurse(tree_.children_left[node], depth + 1)
-            print "{}else:  # if {} > {}".format(indent, name, threshold)
+            print("{}else:  # if {} > {}".format(indent, name, threshold))
             recurse(tree_.children_right[node], depth + 1)
         else:
             rslt = tree_.value[node][0]
-            print "{}return {}, prob: {:.2f}".format(indent, rslt, rslt[1] * 1.0 / sum(rslt))
+            print("{}return {}, prob: {:.2f}".format(indent, rslt, rslt[1] * 1.0 / sum(rslt)))
 
     recurse(0, 1)
-
-

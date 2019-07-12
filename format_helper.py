@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Hide code and prompt in jupyter notebook
 # Usage:
   # from format_helper import hide_code
@@ -5,9 +7,9 @@
   # HTML(hide_code)
 
 hide_code = '''
-    <link rel="stylesheet" 
-    href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" 
-    integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" 
+    <link rel="stylesheet"
+    href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+    integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
     crossorigin="anonymous">
     <script>
       function code_toggle() {
@@ -50,5 +52,5 @@ def print_table(table):
     # table is a list of tuples, where each tuple is a line, each element of the tuple is a column
     col_width = [max(len(x) for x in col) for col in zip(*table)]
     for line in table:
-        print "| " + " ".join("{txt:{width}}".format(txt=x, width=col_width[i])
-                                for i, x in enumerate(line)) + " |"
+        print("| " + " ".join("{txt:{width}}".format(txt=x, width=col_width[i])
+                                for i, x in enumerate(line)) + " |")

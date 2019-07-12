@@ -1,0 +1,18 @@
+# @autodeps
+
+load("@fbcode_macros//build_defs:python_binary.bzl", "python_binary")
+load("@fbcode_macros//build_defs:python_library.bzl", "python_library")
+
+python_library(
+    name = "lib",
+    srcs = glob([
+        "*.py",
+        # "**/*.py",
+    ]),
+    base_module = "base",
+    py_version = ">=3.6",
+    # external_deps = [
+    #     ("numpy"),
+    #     ("scipy", None),
+    # ],
+)

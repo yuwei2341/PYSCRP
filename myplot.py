@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -26,23 +26,23 @@ def add_line_label(ax, yloc=None, is_color=False):
     y_range = ymax - ymin
     for i, l in enumerate(ax.lines):
         y_this = l.get_xydata()[-1, 1] if yloc is None else yloc[i]
-        color = l.get_c() if is_color else 'black'            
+        color = l.get_c() if is_color else 'black'
         ax.text(xmax, y_this, l.get_label(), horizontalalignment='left', verticalalignment='center', color=color)
 
 def autolabel(rects, ax):
-    '''Attach text labels to bar plots 
+    '''Attach text labels to bar plots
     Args:
         rects: bar plot handke
         ax: axis
     Note:
         From: https://matplotlib.org/examples/api/barchart_demo.html
     '''
-    
+
     if rects[0].get_x() == rects[1].get_x(): # axis from a barh
         min_loc = max(min(rect.get_width() for rect in rects), 0.1)
         for rect in rects:
             loc = rect.get_width()
-            ax.text(loc + min_loc * 0.6, rect.get_y(), 
+            ax.text(loc + min_loc * 0.6, rect.get_y(),
                     '%.1f' % round(loc, 1),
                     ha='center', va='bottom')
     else: # axis from a bar
@@ -93,13 +93,13 @@ def ColorSchemes():
               (0.8, 0.0, 0.0),
               (1.0, 0.0, 0.0))
     }
- 
-    plt.register_cmap(name = 'RWWB', data = cdict1) 
+
+    plt.register_cmap(name = 'RWWB', data = cdict1)
     plt.register_cmap(name = 'BWWR', data = cdict2)
 
 def PlotColorMap(lon, lat, data, title = '', cScheme = 'bwr', cRange = None, nInt = 10, levels = None, coastColor = 'k'):
     """
-    PlotColorMap(lon, lat, data, title = '', cScheme = 'bwr', cRange = None, nInt = None, levels = None) plots 
+    PlotColorMap(lon, lat, data, title = '', cScheme = 'bwr', cRange = None, nInt = None, levels = None) plots
     2D color maps in designated region. It allows for nonlinear color scale if levels are provided in such way
     lon, lat, data: longitude, latitude and data to plot
     title: title of figure
@@ -108,12 +108,12 @@ def PlotColorMap(lon, lat, data, title = '', cScheme = 'bwr', cRange = None, nIn
     nInt: number of color intervals
     levels: contour levels
     """
-    lons, lats = np.meshgrid(lon, lat) 
+    lons, lats = np.meshgrid(lon, lat)
 
     # color ranges
     if not cRange:
         cRange = np.ceil(data.std() * 3)
-    
+
     # contour levels: if not provided, using linearly discretized levels
     if levels is None:
         levels = np.linspace(-cRange, cRange , nInt + 1)
@@ -122,11 +122,11 @@ def PlotColorMap(lon, lat, data, title = '', cScheme = 'bwr', cRange = None, nIn
     ColorSchemes() # USDF color schemes from ClimPlot
     cmap = plt.cm.get_cmap(cScheme)
     norm = mpl.colors.BoundaryNorm(levels, cmap.N)
-    
+
 
     # create Basemap instance.
     plt.subplots_adjust(hspace = 0.3)
-    plt.subplots_adjust(wspace = 0.2)    
+    plt.subplots_adjust(wspace = 0.2)
     if lat.ptp() > 175 and lon.ptp() > 355: # If plotting global maps, use Robinson
         m = Basemap(projection = 'robin', lon_0 = 0, resolution = 'c')
         nLat = 30; nLon = 60
@@ -135,23 +135,23 @@ def PlotColorMap(lon, lat, data, title = '', cScheme = 'bwr', cRange = None, nIn
                     llcrnrlon = lon[0], llcrnrlat = lat[0], urcrnrlon = lon[-1], urcrnrlat = lat[-1])
         nLat = 20; nLon = 30
 
-    # plot data: 
-    #im1 = m.pcolormesh(lons, lats, data, cmap = cmap, shading = 'gouraud', latlon = True, vmin = -cRange, vmax = cRange, norm = norm, alpha = 0.8)    
-    #im1 = m.imshow(data, cmap = cmap, vmin = -cRange, vmax = cRange, norm = norm, alpha = 0.8, interpolation='spline16')    
+    # plot data:
+    #im1 = m.pcolormesh(lons, lats, data, cmap = cmap, shading = 'gouraud', latlon = True, vmin = -cRange, vmax = cRange, norm = norm, alpha = 0.8)
+    #im1 = m.imshow(data, cmap = cmap, vmin = -cRange, vmax = cRange, norm = norm, alpha = 0.8, interpolation='spline16')
     im1 = m.contourf(lons, lats, data, cmap = cmap, levels = levels, norm = norm, alpha = 0.8, latlon = True)
 
-    # draw parallels and meridians, labelling them; set linewidth to 0 to not show 
+    # draw parallels and meridians, labelling them; set linewidth to 0 to not show
     m.drawcoastlines(color = coastColor)
     m.drawparallels(np.arange(-90., 99., nLat), linewidth = 0.0, labels = [1, 0, 0, 0])
     m.drawmeridians(np.arange(-180., 189., nLon), linewidth = 0.0, labels = [0, 0, 0, 1])
-    
+
     # add colorbar
     cb = m.colorbar(im1, "bottom", size = "5%", pad = "10%", ticks = levels)
-    
+
     # add a title.
     PltTitle(title)
 
-    
+
 def PltTitle(title, tSize = 18, tWeight = 'normal', vPad = 0.05):
     """
     PltTitle(title, tSize = 18, tWeight = 'normal', vPad = 0.05) add a title with parameters different from the default
