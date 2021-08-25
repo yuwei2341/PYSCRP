@@ -2,25 +2,32 @@
 
 """Library for Machine Learning """
 import random
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn import metrics
-from sklearn import preprocessing
-from sklearn.metrics import precision_recall_curve
+from sklearn import metrics, preprocessing
 from sklearn.calibration import calibration_curve
+from sklearn.metrics import precision_recall_curve
+
+
 try:
     from sklearn.model_selection import learning_curve
 except ImportError as error:
-    print("Error: {}. Possibly sklearn too old. Learning Curve not working".format(error))
+    print(
+        "Error: {}. Possibly sklearn too old. Learning Curve not working".format(
+            error)
+    )
 
-TRAIN_SIZES = np.linspace(.1, 1.0, 5)
+TRAIN_SIZES = np.linspace(0.1, 1.0, 5)
+
+
 def sample_df(df, ratio=0.8, seed=11):
     """Sample a df by index """
 
     random.seed(seed)
-    rows = random.sample(df.index, int(len(df) * ratio))
+    rows = random.sample(df.index.tolist(), int(len(df) * ratio))
     df_train = df.ix[rows]
     df_cv = df.drop(rows)
     return df_train, df_cv
@@ -40,14 +47,16 @@ def sampling_imbalanced(df_major, df_minor, seed, ratio_sample=None):
     np.random.seed(seed)
     if ratio_sample is None:
         ratio_sample = len(df_major) / len(df_minor)
-    n_sample = np.random.choice(len(df_minor), int(len(df_minor) * ratio_sample), replace=True)
+    n_sample = np.random.choice(
+        len(df_minor), int(len(df_minor) * ratio_sample), replace=True
+    )
     return df_major.append(df_minor.iloc[n_sample])
 
 
-def get_xy(dff, y_name='y'):
+def get_xy(dff, y_name="y"):
     """Get X and y, and feature names from data frame """
 
-    dfX = dff.drop(y_name, axis=1, errors='ignore')
+    dfX = dff.drop(y_name, axis=1, errors="ignore")
     y = None if y_name not in dff else dff[y_name].values
     return dfX.values, y, dfX.columns.values
 
@@ -68,14 +77,14 @@ def scale_data(X_train, X_test=None, is_scale=True):
     """Unify process to scale or not scale data """
 
     if is_scale:
-        print('Scaling data')
+        print("Scaling data")
         X_train_scaled, scaler = normalizer(X_train, scaler=None)
         if X_test is not None:
             X_test_scaled, _ = normalizer(X_test, scaler=scaler)
         else:
             X_test_scaled = X_test
     else:
-        print('Not scaling data')
+        print("Not scaling data")
         X_train_scaled = X_train
         X_test_scaled = X_test
         scaler = None
@@ -86,7 +95,7 @@ def plot_cor(corrmat):
     """Plot correlation matrix """
     sns.set(context="paper", font="monospace")
     f, ax = plt.subplots(figsize=(12, 9))
-    sns.heatmap(corrmat, vmax=.99, linewidths=0, square=True)
+    sns.heatmap(corrmat, vmax=0.99, linewidths=0, square=True)
     f.tight_layout()
 
 
@@ -95,12 +104,12 @@ def plot_importance(importances, feature_names, ax=None):
 
     sorted_idx = np.argsort(importances)
     feature_names = np.array(feature_names)[sorted_idx]
-    #fig = plt.figure(figsize=(8, len(feature_names) / 4))
+    # fig = plt.figure(figsize=(8, len(feature_names) / 4))
     ax = ax or plt.subplots(figsize=(8, len(feature_names) / 4))[1]
 
     ax.barh(range(len(importances)), importances[sorted_idx], alpha=0.3, lw=0)
     plt.yticks(np.arange(len(importances)) + 0.5, feature_names)
-    plt.title('Feature Importance')
+    plt.title("Feature Importance")
     plt.show()
     return importances[sorted_idx], feature_names
 
@@ -113,13 +122,13 @@ def plot_roc(score, y_test, ax=None):
 
     # Plot of a ROC curve for a specific class
     ax = ax or plt.subplots()[1]
-    ax.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], 'k--')
+    ax.plot(fpr, tpr, label="ROC curve (area = %0.2f)" % roc_auc)
+    plt.plot([0, 1], [0, 1], "k--")
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title("Receiver operating characteristic")
     plt.legend(loc="lower right")
     plt.show()
 
@@ -127,22 +136,23 @@ def plot_roc(score, y_test, ax=None):
 def proba_calibration(y_test, pred_proba):
     """Calibration plots """
 
-    fraction_of_positives, mean_predicted_value = \
-        calibration_curve(y_test, pred_proba, n_bins=10)
+    fraction_of_positives, mean_predicted_value = calibration_curve(
+        y_test, pred_proba, n_bins=10
+    )
 
     plt.figure(figsize=(5, 5))
     ax1 = plt.subplot2grid((3, 1), (0, 0), rowspan=2)
     ax2 = plt.subplot2grid((3, 1), (2, 0))
 
     ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
-    ax1.plot(mean_predicted_value, fraction_of_positives, "s-", label='Model')
-    ax2.hist(pred_proba, range=(0, 1), bins=10, label='Model',
-             histtype="step", lw=2)
+    ax1.plot(mean_predicted_value, fraction_of_positives, "s-", label="Model")
+    ax2.hist(pred_proba, range=(0, 1), bins=10,
+             label="Model", histtype="step", lw=2)
 
     ax1.set_ylabel("Fraction of positives")
     ax1.set_ylim([-0.05, 1.05])
     ax1.legend(loc="lower right")
-    ax1.set_title('Calibration plots  (reliability curve)')
+    ax1.set_title("Calibration plots  (reliability curve)")
 
     ax2.set_xlabel("Mean predicted value")
     ax2.set_ylabel("Count")
@@ -150,25 +160,43 @@ def proba_calibration(y_test, pred_proba):
     plt.show()
 
 
-def precision_recall_curve_plus(y_test, score, upper=None, lower=None, is_max_f1=True, is_plot=True):
+def precision_recall_curve_plus(y_test,
+                                score,
+                                title='',
+                                pos_label=None,
+                                upper=None,
+                                lower=None,
+                                is_max_f1=True,
+                                is_plot=True):
 
     upper = upper or round(score.max() * 1.1, 2)
+    upper = min(upper, 1)
     lower = lower or round(score.min() * 0.9, 2)
 
-    precision, recall, threshold = precision_recall_curve(y_test, score)
+    precision, recall, threshold = precision_recall_curve(
+        y_test, score, pos_label=pos_label)
     precision = precision[:-1]  # the last one is an extra and is 1
     recall = recall[:-1]  # the last one is an extra and is 0
     f1 = precision * recall * 2 / (precision + recall)
     frac_pred_pos = [(score > ii).mean() for ii in threshold]
-    df_metric = pd.DataFrame({'precision': precision, 'recall': recall, 'f1': f1,
-                              'frac_pred_pos': frac_pred_pos}, index=threshold)
+    df_metric = pd.DataFrame(
+        {
+            "precision": precision,
+            "recall": recall,
+            "f1": f1,
+            "frac_pred_pos": frac_pred_pos,
+        },
+        index=threshold,
+    )
 
     # Return only threshold within certain range
-    df_metric = df_metric.loc[(df_metric.index >= lower) & (df_metric.index <= upper)]
+    df_metric = df_metric.loc[(df_metric.index >= lower)
+                              & (df_metric.index <= upper)]
 
     # Get argmaxf1 for threshold
-    metric_max = df_metric[df_metric['f1'] == df_metric['f1'].max()].iloc[:1, :]
-    metric_max.index.name = 'threshold'
+    metric_max = df_metric[df_metric["f1"] == df_metric["f1"].max()].iloc[:
+                                                                          1, :]
+    metric_max.index.name = "threshold"
 
     if is_plot:
         f, ax = plt.subplots(figsize=(8, 6))
@@ -176,10 +204,15 @@ def precision_recall_curve_plus(y_test, score, upper=None, lower=None, is_max_f1
         xticks_int = 0.1 if upper - lower > 0.6 else 0.05
         xticks = list(np.arange(lower, upper, xticks_int))
         ax.set_xticks(xticks)
+        ax.set_title(title)
         if is_max_f1:
-            ax.axvline(x=metric_max.index[0], color='black', linestyle='--', lw=0.5)
-            ax.text(x=metric_max.index[0] + 0.01, y=metric_max['f1'] * 1.2,
-                    s=metric_max.to_string(index=False, float_format='    %.2f', ))
+            ax.axvline(
+                x=metric_max.index[0], color="black", linestyle="--", lw=0.5)
+            ax.text(
+                x=metric_max.index[0] + 0.01,
+                y=metric_max["f1"] * 1.2,
+                s=metric_max.to_string(index=False, float_format="    %.2f"),
+            )
 
     return metric_max, df_metric
 
@@ -187,8 +220,9 @@ def precision_recall_curve_plus(y_test, score, upper=None, lower=None, is_max_f1
 choose_threshold = precision_recall_curve_plus  # for backward compatibility
 
 
-def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
-                        n_jobs=1, train_sizes=TRAIN_SIZES):
+def plot_learning_curve(
+    estimator, title, X, y, ylim=None, cv=None, n_jobs=1, train_sizes=TRAIN_SIZES
+):
     """
     Generate a simple plot of the test and training learning curve.
 
@@ -244,53 +278,80 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     plt.xlabel("Training examples")
     plt.ylabel("Score")
     train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
+        estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes
+    )
     train_scores_mean = np.mean(train_scores, axis=1)
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
     test_scores_std = np.std(test_scores, axis=1)
     plt.grid()
 
-    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.1,
-                     color="r")
-    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
-             label="Training score")
-    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
-             label="Cross-validation score")
+    plt.fill_between(
+        train_sizes,
+        train_scores_mean - train_scores_std,
+        train_scores_mean + train_scores_std,
+        alpha=0.1,
+        color="r",
+    )
+    plt.fill_between(
+        train_sizes,
+        test_scores_mean - test_scores_std,
+        test_scores_mean + test_scores_std,
+        alpha=0.1,
+        color="g",
+    )
+    plt.plot(train_sizes, train_scores_mean, "o-",
+             color="r", label="Training score")
+    plt.plot(
+        train_sizes, test_scores_mean, "o-", color="g", label="Cross-validation score"
+    )
 
     plt.legend(loc="best")
     return plt
 
 
-def plot_gain(df, n_split=10, y_test_col='y_test', score_col='score'):
-    '''Plot gain charts
+def plot_gain(df, n_split=10, y_test_col="y_test", score_col="score"):
+    """Plot gain charts
     Input:
         df: dataframe containing true value and predicted score
         n_split: how many buckets to split predictions
         y_test_col: name of true value column
         score: name of predicted score column
 
-    '''
+    """
 
-    df_score = df[[y_test_col, score_col]].sort_values(score_col, ascending=False).reset_index(drop=True)
-    df_score['prediction_score_bucket'] = df_score.index / ((len(df_score.index) + 1) / n_split) + 1
-    df_score['prediction_score_bucket'] = df_score['prediction_score_bucket'].apply(lambda x: min(x, n_split))
+    df_score = (
+        df[[y_test_col, score_col]]
+        .sort_values(score_col, ascending=False)
+        .reset_index(drop=True)
+    )
+    df_score["prediction_score_bucket"] = (
+        df_score.index / ((len(df_score.index) + 1) / n_split) + 1
+    )
+    df_score["prediction_score_bucket"] = df_score["prediction_score_bucket"].apply(
+        lambda x: min(x, n_split)
+    )
 
     ap = df_score[y_test_col].sum()
-    df_quantile = df_score.groupby('prediction_score_bucket')[y_test_col].agg({'random chance': lambda x: 1.0 / n_split,
-                                                                       'model': lambda x: x.sum() * 1.0 / ap,
-                                                                       'precision': lambda x: x.mean()})
+    df_quantile = df_score.groupby("prediction_score_bucket")[y_test_col].agg(
+        {
+            "random chance": lambda x: 1.0 / n_split,
+            "model": lambda x: x.sum() * 1.0 / ap,
+            "precision": lambda x: x.mean(),
+        }
+    )
     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
-    df_quantile['precision'].plot(kind='bar', title='Precision in prediction score buckets', ax=axs[0])
+    df_quantile["precision"].plot(
+        kind="bar", title="Precision in prediction score buckets", ax=axs[0]
+    )
     axs[0].set_xticklabels(range(1, n_split + 1), rotation=0)
-    axs[0].set_ylabel('precision')
+    axs[0].set_ylabel("precision")
     df_quantile.loc[0] = [0, 0, 0]
-    df_quantile[['random chance', 'model']].sort_index().cumsum().plot(title='Cumulative Gain Chart', ax=axs[1])
+    df_quantile[["random chance", "model"]].sort_index().cumsum().plot(
+        title="Cumulative Gain Chart", ax=axs[1]
+    )
     axs[1].set_xticks(range(n_split + 1))
-    axs[1].set_ylabel('target population%')
+    axs[1].set_ylabel("target population%")
     axs[1].set_xticklabels(range(n_split + 1), rotation=0)
     plt.show()
 
@@ -298,6 +359,7 @@ def plot_gain(df, n_split=10, y_test_col='y_test', score_col='score'):
 def tree_to_code(tree, feature_names):
     # Return rules from tree
     from sklearn.tree import _tree
+
     tree_ = tree.tree_
     feature_name = [
         feature_names[i] if i != _tree.TREE_UNDEFINED else "undefined!"
@@ -316,6 +378,10 @@ def tree_to_code(tree, feature_names):
             recurse(tree_.children_right[node], depth + 1)
         else:
             rslt = tree_.value[node][0]
-            print("{}return {}, prob: {:.2f}".format(indent, rslt, rslt[1] * 1.0 / sum(rslt)))
+            print(
+                "{}return {}, prob: {:.2f}".format(
+                    indent, rslt, rslt[1] * 1.0 / sum(rslt)
+                )
+            )
 
     recurse(0, 1)

@@ -2,9 +2,9 @@
 
 # Hide code and prompt in jupyter notebook
 # Usage:
-  # from format_helper import hide_code
-  # from IPython.display import HTML
-  # HTML(hide_code)
+# from format_helper import hide_code
+# from IPython.display import HTML
+# HTML(hide_code)
 
 hide_code = '''
     <link rel="stylesheet"

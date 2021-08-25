@@ -5,7 +5,7 @@ import matplotlib as mpl
 import numpy as np
 try:
     from mpl_toolkits.basemap import Basemap
-except ImportError:
+except (ImportError, FileNotFoundError):
     Basemap = lambda: None
 
 def set_plt_font(SMALL_SIZE=14, MEDIUM_SIZE=16, BIGGER_SIZE=18):
@@ -23,7 +23,6 @@ def add_line_label(ax, yloc=None, is_color=False):
     # Add label of line at the end, instead of using legend
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
-    y_range = ymax - ymin
     for i, l in enumerate(ax.lines):
         y_this = l.get_xydata()[-1, 1] if yloc is None else yloc[i]
         color = l.get_c() if is_color else 'black'
@@ -146,7 +145,7 @@ def PlotColorMap(lon, lat, data, title = '', cScheme = 'bwr', cRange = None, nIn
     m.drawmeridians(np.arange(-180., 189., nLon), linewidth = 0.0, labels = [0, 0, 0, 1])
 
     # add colorbar
-    cb = m.colorbar(im1, "bottom", size = "5%", pad = "10%", ticks = levels)
+    m.colorbar(im1, "bottom", size = "5%", pad = "10%", ticks = levels)
 
     # add a title.
     PltTitle(title)
