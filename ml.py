@@ -16,8 +16,7 @@ try:
     from sklearn.model_selection import learning_curve
 except ImportError as error:
     print(
-        "Error: {}. Possibly sklearn too old. Learning Curve not working".format(
-            error)
+        "Error: {}. Possibly sklearn too old. Learning Curve not working".format(error)
     )
 
 TRAIN_SIZES = np.linspace(0.1, 1.0, 5)
@@ -146,8 +145,7 @@ def proba_calibration(y_test, pred_proba):
 
     ax1.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
     ax1.plot(mean_predicted_value, fraction_of_positives, "s-", label="Model")
-    ax2.hist(pred_proba, range=(0, 1), bins=10,
-             label="Model", histtype="step", lw=2)
+    ax2.hist(pred_proba, range=(0, 1), bins=10, label="Model", histtype="step", lw=2)
 
     ax1.set_ylabel("Fraction of positives")
     ax1.set_ylim([-0.05, 1.05])
@@ -300,8 +298,7 @@ def plot_learning_curve(
         alpha=0.1,
         color="g",
     )
-    plt.plot(train_sizes, train_scores_mean, "o-",
-             color="r", label="Training score")
+    plt.plot(train_sizes, train_scores_mean, "o-", color="r", label="Training score")
     plt.plot(
         train_sizes, test_scores_mean, "o-", color="g", label="Cross-validation score"
     )

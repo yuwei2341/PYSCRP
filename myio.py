@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 
-import os
-import random
-import sys
-import hashlib
+import os, random, sys, hashlib
 import numpy as np
 import pandas as pd
 from analytics.bamboo import Bamboo as bb
 
+
 # HTML to restart kernel in jupyter notebook
 # Usage: from IPython.core.display import HTML; HTML(RESTART_KERNEL)
 RESTART_KERNEL = "<script>Jupyter.notebook.kernel.restart()</script>"
+
 
 class QueryIO(object):
 
@@ -18,8 +17,7 @@ class QueryIO(object):
 
     def query_with_cache(self, namespace, sql, issave=True, file_name=None):
         key = '{namespace}.{sql}'.format(**locals())
-        file_name = file_name or hashlib.sha1(
-            str.encode(key)).hexdigest() + '.csv'
+        file_name = file_name or hashlib.sha1(str.encode(key)).hexdigest() + '.csv'
         if key in QueryIO.GLOBAL_QUERY_CACHE:
             data = QueryIO.GLOBAL_QUERY_CACHE[key]
             print('Cached data loaded')
@@ -53,8 +51,7 @@ class DataIO(object):
             print("Wrong load source")
             sys.exit(1)
         if self.load_source == "auto":
-            self.load_source = "file" if os.path.exists(
-                self.file_name) else "query"
+            self.load_source = "file" if os.path.exists(self.file_name) else "query"
 
     def _get_query(self, query, query_file):
         if query is not None:
