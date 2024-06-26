@@ -16,7 +16,7 @@ try:
     from sklearn.model_selection import learning_curve
 except ImportError as error:
     print(
-        "Error: {}. Possibly sklearn too old. Learning Curve not working".format(error)
+        f"Error: {error}. Possibly sklearn too old. Learning Curve not working"
     )
 
 TRAIN_SIZES = np.linspace(0.1, 1.0, 5)
@@ -27,7 +27,7 @@ def sample_df(df, ratio=0.8, seed=11):
 
     random.seed(seed)
     rows = random.sample(df.index.tolist(), int(len(df) * ratio))
-    df_train = df.ix[rows]
+    df_train = df.loc[rows]
     df_cv = df.drop(rows)
     return df_train, df_cv
 
@@ -93,7 +93,7 @@ def scale_data(X_train, X_test=None, is_scale=True):
 def plot_cor(corrmat):
     """Plot correlation matrix """
     sns.set(context="paper", font="monospace")
-    f, ax = plt.subplots(figsize=(12, 9))
+    f, _ = plt.subplots(figsize=(12, 9))
     sns.heatmap(corrmat, vmax=0.99, linewidths=0, square=True)
     f.tight_layout()
 
