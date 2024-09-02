@@ -15,15 +15,83 @@ from sklearn.metrics import precision_recall_curve
 try:
     from sklearn.model_selection import learning_curve
 except ImportError as error:
-    print(
-        f"Error: {error}. Possibly sklearn too old. Learning Curve not working"
-    )
+    print(f"Error: {error}. Possibly sklearn too old. Learning Curve not working")
 
 TRAIN_SIZES = np.linspace(0.1, 1.0, 5)
 
 
+## Feature transformation
+def bin_by_quantile(df, col, quantiles, missing_as=-9999):
+    """Bin a column with certain quantiles given
+    Note:
+     - set missing value as the first bin
+     - remove the original col from df
+    """
+    bins = df[col].quantile(quantiles).round(2).tolist()
+
+    # Create the bin for missing values
+    bins.insert(0, missing_as)
+    df.fillna({col: missing_as}, inplace=True)
+    labels = [f"{i}_{j}" for i, j in zip(bins[:-1], bins[1:])]
+    labels[0] = "missing"
+
+    # right=True to include the right end
+    df["bin_" + col] = pd.cut(df[col], bins, right=True, labels=labels)
+    return df.drop(col, axis=1)
+
+
+def cap_cat(df, col, max_label, max_cats=6):
+    """Cap the number of categories of a column in place.
+    - Rank categories by value counts, and keep the top (max_cats - 1)
+    - Collapse the rest to the category max_label
+    """
+    top_levels = df[col].value_counts(dropna=True).index[:max_cats]
+    s = df[col].copy()
+    s[~s.isin(top_levels)] = max_label
+    df[col] = s
+
+
+def get_xy(dff, y_name="y"):
+    """Get X and y, and feature names from data frame"""
+
+    df_x = dff.drop(y_name, axis=1, errors="ignore")
+    y = None if y_name not in dff else dff[y_name].values
+    return df_x.values, y, df_x.columns.values
+
+
+def normalizer(X, scaler=None):
+    """Normalize data to have mean 0 and std 1
+
+    Use provided scaler; if None, scale with the given data
+
+    """
+    if not scaler:
+        scaler = preprocessing.StandardScaler().fit(X)
+    X_scaled = scaler.transform(X)
+    return X_scaled, scaler
+
+
+def scale_data(X_train, X_test=None, is_scale=True):
+    """Unify process to scale or not scale data"""
+
+    if is_scale:
+        print("Scaling data")
+        X_train_scaled, scaler = normalizer(X_train, scaler=None)
+        if X_test is not None:
+            X_test_scaled, _ = normalizer(X_test, scaler=scaler)
+        else:
+            X_test_scaled = X_test
+    else:
+        print("Not scaling data")
+        X_train_scaled = X_train
+        X_test_scaled = X_test
+        scaler = None
+    return X_train_scaled, X_test_scaled, scaler
+
+
+# Data and class sampling
 def sample_df(df, ratio=0.8, seed=11):
-    """Sample a df by index """
+    """Sample a df by index"""
 
     random.seed(seed)
     rows = random.sample(df.index.tolist(), int(len(df) * ratio))
@@ -52,47 +120,10 @@ def sampling_imbalanced(df_major, df_minor, seed, ratio_sample=None):
     return df_major.append(df_minor.iloc[n_sample])
 
 
-def get_xy(dff, y_name="y"):
-    """Get X and y, and feature names from data frame """
-
-    dfX = dff.drop(y_name, axis=1, errors="ignore")
-    y = None if y_name not in dff else dff[y_name].values
-    return dfX.values, y, dfX.columns.values
-
-
-def normalizer(X, scaler=None):
-    """Normalize data to have mean 0 and std 1
-
-    Use provided scaler; if None, scale with the given data
-
-    """
-    if not scaler:
-        scaler = preprocessing.StandardScaler().fit(X)
-    X_scaled = scaler.transform(X)
-    return X_scaled, scaler
-
-
-def scale_data(X_train, X_test=None, is_scale=True):
-    """Unify process to scale or not scale data """
-
-    if is_scale:
-        print("Scaling data")
-        X_train_scaled, scaler = normalizer(X_train, scaler=None)
-        if X_test is not None:
-            X_test_scaled, _ = normalizer(X_test, scaler=scaler)
-        else:
-            X_test_scaled = X_test
-    else:
-        print("Not scaling data")
-        X_train_scaled = X_train
-        X_test_scaled = X_test
-        scaler = None
-    return X_train_scaled, X_test_scaled, scaler
-
-
+# Plot
 def plot_cor(corrmat):
-    """Plot correlation matrix """
-    sns.set(context="paper", font="monospace")
+    """Plot correlation matrix"""
+    sns.set_theme(context="paper", font="monospace")
     f, _ = plt.subplots(figsize=(12, 9))
     sns.heatmap(corrmat, vmax=0.99, linewidths=0, square=True)
     f.tight_layout()
@@ -114,14 +145,14 @@ def plot_importance(importances, feature_names, ax=None):
 
 
 def plot_roc(score, y_test, ax=None):
-    """Compute ROC curve """
+    """Compute ROC curve"""
 
     fpr, tpr, _ = metrics.roc_curve(y_test, score)
     roc_auc = metrics.roc_auc_score(y_test, score)
 
     # Plot of a ROC curve for a specific class
     ax = ax or plt.subplots()[1]
-    ax.plot(fpr, tpr, label="ROC curve (area = %0.2f)" % roc_auc)
+    ax.plot(fpr, tpr, label=f"ROC curve (area = {roc_auc:.2})")
     plt.plot([0, 1], [0, 1], "k--")
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -133,7 +164,7 @@ def plot_roc(score, y_test, ax=None):
 
 
 def proba_calibration(y_test, pred_proba):
-    """Calibration plots """
+    """Calibration plots"""
 
     fraction_of_positives, mean_predicted_value = calibration_curve(
         y_test, pred_proba, n_bins=10
@@ -158,21 +189,24 @@ def proba_calibration(y_test, pred_proba):
     plt.show()
 
 
-def precision_recall_curve_plus(y_test,
-                                score,
-                                title='',
-                                pos_label=None,
-                                upper=None,
-                                lower=None,
-                                is_max_f1=True,
-                                is_plot=True):
+def precision_recall_curve_plus(
+    y_test,
+    score,
+    title="",
+    pos_label=None,
+    upper=None,
+    lower=None,
+    is_max_f1=True,
+    is_plot=True,
+):
 
     upper = upper or round(score.max() * 1.1, 2)
     upper = min(upper, 1)
     lower = lower or round(score.min() * 0.9, 2)
 
     precision, recall, threshold = precision_recall_curve(
-        y_test, score, pos_label=pos_label)
+        y_test, score, pos_label=pos_label
+    )
     precision = precision[:-1]  # the last one is an extra and is 1
     recall = recall[:-1]  # the last one is an extra and is 0
     f1 = precision * recall * 2 / (precision + recall)
@@ -188,12 +222,10 @@ def precision_recall_curve_plus(y_test,
     )
 
     # Return only threshold within certain range
-    df_metric = df_metric.loc[(df_metric.index >= lower)
-                              & (df_metric.index <= upper)]
+    df_metric = df_metric.loc[(df_metric.index >= lower) & (df_metric.index <= upper)]
 
     # Get argmaxf1 for threshold
-    metric_max = df_metric[df_metric["f1"] == df_metric["f1"].max()].iloc[:
-                                                                          1, :]
+    metric_max = df_metric[df_metric["f1"] == df_metric["f1"].max()].iloc[:1, :]
     metric_max.index.name = "threshold"
 
     if is_plot:
@@ -204,8 +236,7 @@ def precision_recall_curve_plus(y_test,
         ax.set_xticks(xticks)
         ax.set_title(title)
         if is_max_f1:
-            ax.axvline(
-                x=metric_max.index[0], color="black", linestyle="--", lw=0.5)
+            ax.axvline(x=metric_max.index[0], color="black", linestyle="--", lw=0.5)
             ax.text(
                 x=metric_max.index[0] + 0.01,
                 y=metric_max["f1"] * 1.2,
@@ -337,7 +368,7 @@ def plot_gain(df, n_split=10, y_test_col="y_test", score_col="score"):
             "precision": lambda x: x.mean(),
         }
     )
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
+    _, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
     df_quantile["precision"].plot(
         kind="bar", title="Precision in prediction score buckets", ax=axs[0]
     )
