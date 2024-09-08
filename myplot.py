@@ -8,7 +8,26 @@ try:
 except (ImportError, FileNotFoundError):
     Basemap = lambda: None
 
+
+def get_xy_lim(plot_values, unit=None):
+    '''Given a list of integers for y, get the lower and upper limit of y-axis for plot
+    Note:
+        min_y is largest 10-base number smaller than min(plot_values)
+        max_y is smallest 10-base number larger than max(plot_values)
+        If unit is given, use unit to replace the 10-base
+    Example:
+        get_xy_lim([450, 500, 620]) -> 400, 700
+    '''
+    min_val, max_val = int(min(plot_values)), int(max(plot_values))
+    unit = unit or 10**(len(str(min_val)) - 1)
+    min_y = min_val - min_val % unit
+    max_y = max_val - max_val % unit + unit
+    return min_y, max_y
+
+
 def set_plt_font(SMALL_SIZE=14, MEDIUM_SIZE=16, BIGGER_SIZE=18):
+    '''Set default font for plots
+    '''
     plt.rc('font', size=MEDIUM_SIZE)          # controls default text sizes
     plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
     plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
@@ -18,9 +37,9 @@ def set_plt_font(SMALL_SIZE=14, MEDIUM_SIZE=16, BIGGER_SIZE=18):
     plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 # import seaborn as sns
-# sns.set(context="paper", font="monospace")
+# sns.set_theme(context="paper", font="monospace")
 def add_line_label(ax, yloc=None, is_color=False):
-    # Add label of line at the end, instead of using legend
+    '''Add label of line at the end, instead of using legend'''
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     for i, l in enumerate(ax.lines):

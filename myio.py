@@ -3,8 +3,14 @@
 import os, random, sys, hashlib
 import numpy as np
 import pandas as pd
-from analytics.bamboo import Bamboo as bb
-
+# from analytics.bamboo import Bamboo as bb
+class Bamboo:
+    '''A dummy class to replace the missing Bamboo'''
+    def __init__(self):
+        pass
+    def query_presto(self, namespace, sql):
+        return None
+bb = Bamboo()
 
 # HTML to restart kernel in jupyter notebook
 # Usage: from IPython.core.display import HTML; HTML(RESTART_KERNEL)
